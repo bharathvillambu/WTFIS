@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Insta Locator",
+    "slug": "insta-locator",
+    "scheme": "instalocator",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.instalocator.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Insta Locator uses your location while Radar is open to show your approximate distance to nearby consenting users.",
+        "NSPhotoLibraryUsageDescription": "Insta Locator needs access to your photos so you can set a profile avatar."
+      }
+    },
+    "android": {
+      "package": "com.instalocator.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Insta Locator uses your location while Radar is open to show your approximate distance to nearby consenting users."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Insta Locator needs access to your photos so you can set a profile avatar."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2a95fd4e-9332-4cb6-88a8-b89dbb17c4c8"
+      }
+    }
+  }
+}
