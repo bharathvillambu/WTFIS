@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -15,25 +14,39 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import {
-  buildInstagramUrl,
-  isValidInstagramUsername,
-  normalizeInstagramUsername,
-} from '@/utils/validation';
+import { LinearGradient } from 'expo-linear-gradient';
+import { buildInstagramUrl, calculateAge } from '@/utils/validation';
 import { uploadAvatar, upsertMyProfile, setRadarVisibility } from '@/lib/profile';
 import { requestLocationPermission, getCurrentLocation } from '@/lib/location';
 import { updateMyLocation } from '@/lib/nearbyUsers';
+import GradientButton from '@/components/GradientButton';
+import GenderSelect from '@/components/GenderSelect';
+import CalendarDatePicker from '@/components/CalendarDatePicker';
+import { COLORS, IG_GRADIENT } from '@/constants/theme';
+import { MIN_AGE } from '@/constants/config';
 
 type Step = 'profile' | 'radar';
 
 export default function SetupScreen() {
   const [step, setStep] = useState<Step>('profile');
   const [username, setUsername] = useState('');
+  const [profileUrl, setProfileUrl] = useState('');
+  const [urlEdited, setUrlEdited] = useState(false);
+  const [gender, setGender] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [finishing, setFinishing] = useState(false);
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    if (!urlEdited) {
+      setProfileUrl(value.trim() ? buildInstagramUrl(value) : '');
+    }
+  };
 
   const pickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -53,12 +66,16 @@ export default function SetupScreen() {
   };
 
   const handleSubmitProfile = async () => {
-    const cleanUsername = normalizeInstagramUsername(username);
-    if (!isValidInstagramUsername(cleanUsername)) {
-      Alert.alert(
-        'Invalid Instagram username',
-        'Please enter a valid Instagram username, e.g. @sneha'
-      );
+    if (!username.trim()) {
+      Alert.alert('Username required', 'Please enter a display username.');
+      return;
+    }
+    if (!birthDate) {
+      Alert.alert('Date of birth required', 'Please select your date of birth.');
+      return;
+    }
+    if (calculateAge(birthDate) < MIN_AGE) {
+      Alert.alert('Age restriction', `You must be at least ${MIN_AGE} years old to use this app.`);
       return;
     }
 
@@ -75,11 +92,12 @@ export default function SetupScreen() {
       }
     }
 
-    const instagramUrl = buildInstagramUrl(cleanUsername);
     const { error } = await upsertMyProfile({
-      instagram_username: cleanUsername,
-      instagram_url: instagramUrl,
+      instagram_username: username.trim(),
+      instagram_url: profileUrl.trim() || buildInstagramUrl(username),
       avatar_url: avatarUrl,
+      gender,
+      birth_date: birthDate,
     });
 
     setSaving(false);
@@ -136,8 +154,8 @@ export default function SetupScreen() {
           <Switch
             value={radarEnabled}
             onValueChange={setRadarEnabled}
-            trackColor={{ true: '#1fffc9', false: '#233a34' }}
-            thumbColor="#04100c"
+            trackColor={{ true: '#833AB4', false: COLORS.border }}
+            thumbColor={COLORS.white}
           />
         </View>
         <Text style={styles.helperText}>
@@ -145,57 +163,83 @@ export default function SetupScreen() {
           turn this off anytime.
         </Text>
 
-        <TouchableOpacity style={styles.button} onPress={handleFinish} disabled={finishing}>
-          {finishing ? (
-            <ActivityIndicator color="#00120d" />
-          ) : (
-            <Text style={styles.buttonText}>Continue to Radar</Text>
-          )}
-        </TouchableOpacity>
+        <GradientButton label="Continue to Radar" onPress={handleFinish} loading={finishing} style={{ marginTop: 32 }} />
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: COLORS.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Set up your profile</Text>
 
-        <TouchableOpacity style={styles.avatarPicker} onPress={pickAvatar}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-          ) : (
-            <Text style={styles.avatarPlaceholder}>+ Add photo</Text>
-          )}
+        <TouchableOpacity onPress={pickAvatar} activeOpacity={0.85} style={styles.avatarWrapper}>
+          <LinearGradient colors={IG_GRADIENT} style={styles.avatarRing}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholderInner}>
+                <Text style={styles.avatarPlaceholder}>+ Add photo</Text>
+              </View>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
-        <Text style={styles.label}>Instagram Username</Text>
+        <Text style={styles.label}>Username</Text>
         <TextInput
           style={styles.input}
-          placeholder="@sneha"
-          placeholderTextColor="#3f6156"
+          placeholder="Enter any username"
+          placeholderTextColor={COLORS.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
           value={username}
-          onChangeText={setUsername}
+          onChangeText={handleUsernameChange}
         />
-        {username.length > 0 && (
-          <Text style={styles.previewUrl}>
-            {buildInstagramUrl(normalizeInstagramUsername(username))}
-          </Text>
-        )}
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmitProfile} disabled={saving}>
-          {saving ? (
-            <ActivityIndicator color="#00120d" />
-          ) : (
-            <Text style={styles.buttonText}>Continue</Text>
-          )}
+        <Text style={styles.label}>Profile link (Open Instagram button)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="https://instagram.com/yourname or any URL"
+          placeholderTextColor={COLORS.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={profileUrl}
+          onChangeText={(v) => {
+            setProfileUrl(v);
+            setUrlEdited(true);
+          }}
+        />
+
+        <Text style={styles.label}>Gender</Text>
+        <GenderSelect value={gender} onChange={setGender} />
+
+        <Text style={styles.label}>Date of birth</Text>
+        <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>
+          <Text style={birthDate ? styles.dateValue : styles.datePlaceholder}>
+            {birthDate ?? 'Select your date of birth'}
+          </Text>
         </TouchableOpacity>
+
+        <GradientButton
+          label="Continue"
+          onPress={handleSubmitProfile}
+          loading={saving}
+          style={{ marginTop: 32 }}
+        />
       </ScrollView>
+
+      <CalendarDatePicker
+        visible={showCalendar}
+        minAge={MIN_AGE}
+        onClose={() => setShowCalendar(false)}
+        onConfirm={(iso) => {
+          setBirthDate(iso);
+          setShowCalendar(false);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -203,69 +247,73 @@ export default function SetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
     padding: 24,
     justifyContent: 'center',
   },
   title: {
-    color: '#eafff7',
+    color: COLORS.text,
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 24,
     textAlign: 'center',
   },
-  avatarPicker: {
+  avatarWrapper: {
     alignSelf: 'center',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#0e1512',
-    borderWidth: 1,
-    borderColor: '#1c3630',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 32,
   },
+  avatarRing: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    padding: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    borderWidth: 3,
+    borderColor: COLORS.background,
+  },
+  avatarPlaceholderInner: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarPlaceholder: {
-    color: '#7fd9c4',
-    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   label: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 13,
     marginBottom: 8,
+    marginTop: 16,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#0e1512',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1c3630',
-    color: '#eafff7',
+    borderColor: COLORS.border,
+    color: COLORS.text,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
   },
-  previewUrl: {
-    color: '#3f6156',
-    fontSize: 12,
-    marginTop: 6,
+  dateValue: {
+    color: COLORS.text,
+    fontSize: 15,
   },
-  button: {
-    backgroundColor: '#39ffc4',
-    paddingVertical: 16,
-    borderRadius: 999,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  buttonText: {
-    color: '#00120d',
-    fontWeight: '800',
+  datePlaceholder: {
+    color: COLORS.textMuted,
     fontSize: 15,
   },
   toggleRow: {
@@ -276,16 +324,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   toggleLabel: {
-    color: '#39ffc4',
+    color: '#833AB4',
     fontWeight: '700',
     fontSize: 16,
   },
   helperText: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 8,
   },
 });
-

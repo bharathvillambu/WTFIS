@@ -13,18 +13,24 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import BottomNav from '@/components/BottomNav';
+import GradientButton from '@/components/GradientButton';
+import GenderSelect from '@/components/GenderSelect';
+import CalendarDatePicker from '@/components/CalendarDatePicker';
 import { getMyProfile, upsertMyProfile, uploadAvatar } from '@/lib/profile';
-import {
-  buildInstagramUrl,
-  isValidInstagramUsername,
-  normalizeInstagramUsername,
-} from '@/utils/validation';
+import { buildInstagramUrl, calculateAge } from '@/utils/validation';
+import { COLORS, IG_GRADIENT } from '@/constants/theme';
+import { MIN_AGE } from '@/constants/config';
 import type { Profile } from '@/types/user';
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [username, setUsername] = useState('');
+  const [profileUrl, setProfileUrl] = useState('');
+  const [gender, setGender] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,6 +40,9 @@ export default function ProfileScreen() {
       if (data) {
         setProfile(data);
         setUsername(data.instagram_username ?? '');
+        setProfileUrl(data.instagram_url ?? '');
+        setGender(data.gender ?? null);
+        setBirthDate(data.birth_date ?? null);
         setAvatarUri(data.avatar_url);
       }
       setLoading(false);
@@ -65,20 +74,22 @@ export default function ProfileScreen() {
   };
 
   const handleSave = async () => {
-    const cleanUsername = normalizeInstagramUsername(username);
-    if (!isValidInstagramUsername(cleanUsername)) {
-      Alert.alert(
-        'Invalid Instagram username',
-        'Please enter a valid Instagram username, e.g. @sneha'
-      );
+    if (!username.trim()) {
+      Alert.alert('Username required', 'Please enter a display username.');
+      return;
+    }
+    if (birthDate && calculateAge(birthDate) < MIN_AGE) {
+      Alert.alert('Age restriction', `You must be at least ${MIN_AGE} years old to use this app.`);
       return;
     }
 
     setSaving(true);
     const { error } = await upsertMyProfile({
-      instagram_username: cleanUsername,
-      instagram_url: buildInstagramUrl(cleanUsername),
+      instagram_username: username.trim(),
+      instagram_url: profileUrl.trim() || buildInstagramUrl(username),
       avatar_url: avatarUri,
+      gender,
+      birth_date: birthDate,
     });
     setSaving(false);
 
@@ -93,7 +104,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#39ffc4" size="large" />
+        <ActivityIndicator color="#833AB4" size="large" />
       </View>
     );
   }
@@ -105,46 +116,71 @@ export default function ProfileScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>PROFILE</Text>
+          <Text style={styles.title}>Profile</Text>
 
-          <TouchableOpacity style={styles.avatarPicker} onPress={pickAvatar} disabled={saving}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
-            ) : (
-              <Text style={styles.avatarPlaceholder}>+ Add photo</Text>
-            )}
+          <TouchableOpacity onPress={pickAvatar} disabled={saving} activeOpacity={0.85} style={styles.avatarWrapper}>
+            <LinearGradient colors={IG_GRADIENT} style={styles.avatarRing}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholderInner}>
+                  <Text style={styles.avatarPlaceholder}>+ Add photo</Text>
+                </View>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
 
-          <Text style={styles.label}>Instagram Username</Text>
+          <Text style={styles.label}>Username</Text>
           <TextInput
             style={styles.input}
-            placeholder="@sneha"
-            placeholderTextColor="#3f6156"
+            placeholder="Enter any username"
+            placeholderTextColor={COLORS.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
             value={username}
             onChangeText={setUsername}
           />
-          {username.length > 0 && (
-            <Text style={styles.previewUrl}>
-              {buildInstagramUrl(normalizeInstagramUsername(username))}
-            </Text>
-          )}
 
-          <TouchableOpacity style={styles.button} onPress={handleSave} disabled={saving}>
-            {saving ? (
-              <ActivityIndicator color="#00120d" />
-            ) : (
-              <Text style={styles.buttonText}>Save changes</Text>
-            )}
+          <Text style={styles.label}>Profile link (Open Instagram button)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="https://instagram.com/yourname or any URL"
+            placeholderTextColor={COLORS.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={profileUrl}
+            onChangeText={setProfileUrl}
+          />
+
+          <Text style={styles.label}>Gender</Text>
+          <GenderSelect value={gender} onChange={setGender} />
+
+          <Text style={styles.label}>Date of birth</Text>
+          <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>
+            <Text style={birthDate ? styles.dateValue : styles.datePlaceholder}>
+              {birthDate ?? 'Select your date of birth'}
+            </Text>
           </TouchableOpacity>
 
+          <GradientButton label="Save changes" onPress={handleSave} loading={saving} style={{ marginTop: 32 }} />
+
           <Text style={styles.radarStatus}>
-            Radar visibility: {profile?.visible_on_radar ? 'ON' : 'OFF'} — manage this in
-            Settings.
+            Radar visibility: {profile?.visible_on_radar ? 'ON' : 'OFF'} — manage this in Settings.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CalendarDatePicker
+        visible={showCalendar}
+        minAge={MIN_AGE}
+        initialDate={birthDate ? new Date(birthDate) : undefined}
+        onClose={() => setShowCalendar(false)}
+        onConfirm={(iso) => {
+          setBirthDate(iso);
+          setShowCalendar(false);
+        }}
+      />
+
       <BottomNav />
     </View>
   );
@@ -153,13 +189,13 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
   },
   container: {
     flexGrow: 1,
@@ -167,72 +203,74 @@ const styles = StyleSheet.create({
     paddingTop: 56,
   },
   title: {
-    color: '#39ffc4',
-    fontSize: 20,
+    color: COLORS.text,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 2,
     textAlign: 'center',
     marginBottom: 32,
   },
-  avatarPicker: {
+  avatarWrapper: {
     alignSelf: 'center',
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#0e1512',
-    borderWidth: 1,
-    borderColor: '#1c3630',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 32,
   },
+  avatarRing: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    padding: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    borderWidth: 3,
+    borderColor: COLORS.background,
+  },
+  avatarPlaceholderInner: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarPlaceholder: {
-    color: '#7fd9c4',
-    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   label: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 13,
     marginBottom: 8,
+    marginTop: 16,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#0e1512',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1c3630',
-    color: '#eafff7',
+    borderColor: COLORS.border,
+    color: COLORS.text,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
   },
-  previewUrl: {
-    color: '#3f6156',
-    fontSize: 12,
-    marginTop: 6,
+  dateValue: {
+    color: COLORS.text,
+    fontSize: 15,
   },
-  button: {
-    backgroundColor: '#39ffc4',
-    paddingVertical: 16,
-    borderRadius: 999,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  buttonText: {
-    color: '#00120d',
-    fontWeight: '800',
+  datePlaceholder: {
+    color: COLORS.textMuted,
     fontSize: 15,
   },
   radarStatus: {
-    color: '#5f8f80',
+    color: COLORS.textSecondary,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 20,
   },
 });
-

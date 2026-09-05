@@ -1,14 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
+import { COLORS } from '@/constants/theme';
 
-const TABS: { label: string; href: '/radar' | '/profile' | '/settings' }[] = [
-  { label: 'RADAR', href: '/radar' },
-  { label: 'PROFILE', href: '/profile' },
-  { label: 'SETTINGS', href: '/settings' },
+const TABS: { label: string; icon: string; href: '/radar' | '/profile' | '/settings' }[] = [
+  { label: 'Radar', icon: '◎', href: '/radar' },
+  { label: 'Profile', icon: '⌂', href: '/profile' },
+  { label: 'Settings', icon: '⚙', href: '/settings' },
 ];
 
-/** Minimal bottom navigation shared by the Radar, Profile, and Settings screens. */
+/** Minimal Instagram-style bottom navigation shared by Radar, Profile, and Settings. */
 export default function BottomNav() {
   const pathname = usePathname();
 
@@ -22,8 +23,8 @@ export default function BottomNav() {
             style={styles.tab}
             onPress={() => router.replace(tab.href)}
           >
+            <Text style={[styles.icon, active && styles.activeIcon]}>{tab.icon}</Text>
             <Text style={[styles.label, active && styles.activeLabel]}>{tab.label}</Text>
-            {active && <View style={styles.activeDot} />}
           </TouchableOpacity>
         );
       })}
@@ -35,30 +36,34 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#132420',
-    backgroundColor: '#04100c',
-    paddingTop: 10,
+    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.background,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
+  },
+  icon: {
+    fontSize: 20,
+    color: COLORS.textSecondary,
+  },
+  activeIcon: {
+    color: '#833AB4',
   },
   label: {
-    color: '#5f8f80',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
   activeLabel: {
-    color: '#39ffc4',
-  },
-  activeDot: {
-    marginTop: 4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#39ffc4',
+    color: '#833AB4',
+    fontWeight: '700',
   },
 });
+
+
 

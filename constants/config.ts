@@ -29,3 +29,18 @@ export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
 
 export const STORAGE_AVATAR_BUCKET = 'avatars';
 
+/** Selectable gender options shown throughout the app. */
+export const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
+
+/** Minimum age allowed to create a profile. */
+export const MIN_AGE = 18;
+
+/** Maximum age selectable in the radar age-range filter. */
+export const MAX_AGE = 80;
+
+/** Default age range used by the Radar filter bar. */
+export const DEFAULT_AGE_RANGE: [number, number] = [MIN_AGE, MAX_AGE];
+
+/** Page size used when "buffering" the nearby-users list as the user scrolls. */
+export const USERS_PAGE_SIZE = 10;
+

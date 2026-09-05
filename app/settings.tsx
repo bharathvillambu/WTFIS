@@ -15,6 +15,7 @@ import { getMyProfile, setRadarVisibility, deleteMyAccount } from '@/lib/profile
 import { signOut } from '@/lib/auth';
 import { getStoredRadius, setStoredRadius } from '@/lib/settingsStorage';
 import { RADIUS_OPTIONS_METERS, DEFAULT_RADIUS_METERS } from '@/constants/config';
+import { COLORS } from '@/constants/theme';
 
 export default function SettingsScreen() {
   const [visible, setVisible] = useState(false);
@@ -73,7 +74,7 @@ export default function SettingsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#39ffc4" size="large" />
+        <ActivityIndicator color="#833AB4" size="large" />
       </View>
     );
   }
@@ -81,7 +82,7 @@ export default function SettingsScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>SETTINGS</Text>
+        <Text style={styles.title}>Settings</Text>
 
         <View style={styles.section}>
           <View style={styles.row}>
@@ -90,8 +91,8 @@ export default function SettingsScreen() {
               value={visible}
               onValueChange={handleToggleRadar}
               disabled={busy}
-              trackColor={{ true: '#1fffc9', false: '#233a34' }}
-              thumbColor="#04100c"
+              trackColor={{ true: '#833AB4', false: COLORS.border }}
+              thumbColor={COLORS.white}
             />
           </View>
           <Text style={styles.helperText}>
@@ -148,27 +149,26 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#04100c' },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
   },
   container: { flexGrow: 1, padding: 24, paddingTop: 56 },
   title: {
-    color: '#39ffc4',
-    fontSize: 20,
+    color: COLORS.text,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 2,
     textAlign: 'center',
     marginBottom: 32,
   },
   section: {
-    backgroundColor: '#0e1512',
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1c3630',
+    borderColor: COLORS.border,
     padding: 16,
     marginBottom: 16,
   },
@@ -178,12 +178,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   rowLabel: {
-    color: '#eafff7',
+    color: COLORS.text,
     fontSize: 15,
     fontWeight: '600',
   },
   helperText: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 12,
     marginTop: 10,
     lineHeight: 18,
@@ -198,37 +198,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#1c3630',
+    borderColor: COLORS.border,
   },
   radiusChipActive: {
-    backgroundColor: '#39ffc4',
-    borderColor: '#39ffc4',
+    backgroundColor: '#833AB4',
+    borderColor: '#833AB4',
   },
   radiusChipText: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   radiusChipTextActive: {
-    color: '#00120d',
+    color: COLORS.white,
   },
   linkRow: {
     paddingVertical: 12,
   },
   linkText: {
-    color: '#eafff7',
+    color: COLORS.text,
     fontSize: 14,
   },
   signOutButton: {
-    borderWidth: 1,
-    borderColor: '#39ffc4',
+    borderWidth: 1.5,
+    borderColor: '#833AB4',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
   signOutText: {
-    color: '#39ffc4',
+    color: '#833AB4',
     fontWeight: '700',
   },
   deleteButton: {
@@ -237,9 +237,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   deleteText: {
-    color: '#ff6b6b',
+    color: COLORS.danger,
     fontWeight: '600',
     fontSize: 13,
   },
 });
-

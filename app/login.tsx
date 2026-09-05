@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { signInWithGoogle } from '@/lib/auth';
 import { APP_NAME } from '@/constants/config';
+import { COLORS, IG_GRADIENT } from '@/constants/theme';
+import GradientButton from '@/components/GradientButton';
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -31,22 +27,14 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.title}>{APP_NAME.toUpperCase()}</Text>
+        <LinearGradient colors={IG_GRADIENT} style={styles.logoRing}>
+          <View style={styles.logoInner} />
+        </LinearGradient>
+        <Text style={styles.title}>{APP_NAME}</Text>
         <Text style={styles.subtitle}>Discover Instagram users nearby.</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleGoogleSignIn}
-        disabled={loading}
-        activeOpacity={0.85}
-      >
-        {loading ? (
-          <ActivityIndicator color="#00120d" />
-        ) : (
-          <Text style={styles.buttonText}>Continue with Google</Text>
-        )}
-      </TouchableOpacity>
+      <GradientButton label="Continue with Google" onPress={handleGoogleSignIn} loading={loading} style={styles.button} />
 
       <Text style={styles.disclaimer}>
         Insta Locator is an independent app and is not affiliated with Instagram or Meta.
@@ -58,7 +46,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
@@ -67,41 +55,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 64,
   },
+  logoRing: {
+    width: 84,
+    height: 84,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  logoInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+  },
   title: {
-    color: '#39ffc4',
-    fontSize: 32,
+    color: COLORS.text,
+    fontSize: 30,
     fontWeight: '800',
-    letterSpacing: 3,
-    textShadowColor: '#1fffc9',
-    textShadowRadius: 16,
-    textShadowOffset: { width: 0, height: 0 },
   },
   subtitle: {
-    color: '#7fd9c4',
+    color: COLORS.textSecondary,
     fontSize: 14,
     marginTop: 12,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#39ffc4',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 999,
     width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#00120d',
-    fontWeight: '800',
-    fontSize: 15,
   },
   disclaimer: {
     position: 'absolute',
     bottom: 40,
-    color: '#3f6156',
+    color: COLORS.textMuted,
     fontSize: 11,
     textAlign: 'center',
     paddingHorizontal: 24,
   },
 });
-

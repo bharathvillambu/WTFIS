@@ -22,6 +22,8 @@ export interface UpsertProfileInput {
   instagram_username: string;
   instagram_url: string;
   avatar_url?: string | null;
+  gender?: string | null;
+  birth_date?: string | null;
 }
 
 export async function upsertMyProfile(
@@ -37,6 +39,8 @@ export async function upsertMyProfile(
     instagram_username: input.instagram_username,
     instagram_url: input.instagram_url,
     avatar_url: input.avatar_url ?? null,
+    gender: input.gender ?? null,
+    birth_date: input.birth_date ?? null,
   });
 
   if (error) return { error: error.message };

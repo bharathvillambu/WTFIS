@@ -2,14 +2,14 @@ import { useCallback, useState } from 'react';
 import { getNearbyUsers, updateMyLocation } from '@/lib/nearbyUsers';
 import { getCurrentLocation } from '@/lib/location';
 import { DEFAULT_RADIUS_METERS } from '@/constants/config';
-import type { NearbyUser } from '@/types/user';
+import type { NearbyUser, NearbyUserFilters } from '@/types/user';
 
 interface UseNearbyUsersState {
   users: NearbyUser[];
   loading: boolean;
   error: string | null;
   /** Full refresh cycle: get location -> push it -> query nearby users. */
-  refresh: (radiusMeters?: number) => Promise<void>;
+  refresh: (radiusMeters?: number, filters?: NearbyUserFilters) => Promise<void>;
 }
 
 /**
@@ -26,37 +26,41 @@ export function useNearbyUsers(): UseNearbyUsersState {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (radiusMeters: number = DEFAULT_RADIUS_METERS) => {
-    setLoading(true);
-    setError(null);
+  const refresh = useCallback(
+    async (radiusMeters: number = DEFAULT_RADIUS_METERS, filters: NearbyUserFilters = {}) => {
+      setLoading(true);
+      setError(null);
 
-    const locationResult = await getCurrentLocation();
-    if (locationResult.error || !locationResult.coords) {
+      const locationResult = await getCurrentLocation();
+      if (locationResult.error || !locationResult.coords) {
+        setLoading(false);
+        setError(mapLocationError(locationResult.error));
+        return;
+      }
+
+      const { error: updateError } = await updateMyLocation(locationResult.coords);
+      if (updateError) {
+        setLoading(false);
+        setError(updateError);
+        return;
+      }
+
+      const { data, error: queryError } = await getNearbyUsers(
+        locationResult.coords,
+        radiusMeters,
+        filters
+      );
       setLoading(false);
-      setError(mapLocationError(locationResult.error));
-      return;
-    }
 
-    const { error: updateError } = await updateMyLocation(locationResult.coords);
-    if (updateError) {
-      setLoading(false);
-      setError(updateError);
-      return;
-    }
+      if (queryError) {
+        setError(queryError);
+        return;
+      }
 
-    const { data, error: queryError } = await getNearbyUsers(
-      locationResult.coords,
-      radiusMeters
-    );
-    setLoading(false);
-
-    if (queryError) {
-      setError(queryError);
-      return;
-    }
-
-    setUsers(data);
-  }, []);
+      setUsers(data);
+    },
+    []
+  );
 
   return { users, loading, error, refresh };
 }

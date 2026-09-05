@@ -9,6 +9,18 @@ profile.
 Built with Expo SDK 57, Expo Router, TypeScript, Supabase (Auth + Postgres +
 PostGIS + Storage), and `expo-location`.
 
+The UI follows an Instagram-inspired visual theme (see `constants/theme.ts`),
+profiles now include **gender** and **date of birth** (picked via a
+dependency-free calendar component), and the Radar screen shows nearby
+people as a filterable, scrollable list below the radar animation instead
+of clustered blips on the dial. Username and profile-link fields are
+intentionally free-text with no format validation.
+
+> **Updating an existing backend?** See
+> [`docs/BACKEND_UPDATE_GUIDE.md`](docs/BACKEND_UPDATE_GUIDE.md) for the
+> exact steps to apply the `0002_gender_age_and_relaxed_validation.sql`
+> migration to an already-deployed Supabase project.
+
 ---
 
 ## Quick start checklist
@@ -51,13 +63,17 @@ app/            Expo Router screens (file-based routing)
   settings.tsx  Radar visibility, radius, delete account
   privacy.tsx   Privacy Policy
   terms.tsx     Terms of Service
-components/     Radar, RadarUser, UserCard, ProfileCard, BottomNav
+components/     Radar (decorative), UserCard, ProfileCard, BottomNav,
+                GenderSelect, AgeRangeFilter, CalendarDatePicker, GradientButton
 lib/            supabase.ts, auth.ts, location.ts, nearbyUsers.ts, profile.ts
 hooks/          useAuth, useLocation, useNearbyUsers
 types/          Shared TypeScript types
-utils/          distance formatting, Instagram URL validation
-constants/      config.ts (env vars, tunables)
+utils/          distance formatting, validation/age helpers
+constants/      config.ts (env vars, tunables), theme.ts (Instagram theme)
 supabase/migrations/0001_init.sql   Full DB schema, RLS, RPCs
+supabase/migrations/0002_gender_age_and_relaxed_validation.sql
+                Gender/age columns + relaxed validation + updated RPC
+docs/BACKEND_UPDATE_GUIDE.md  Step-by-step backend migration guide
 ```
 
 ---

@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { getMyProfile } from '@/lib/profile';
+import { COLORS } from '@/constants/theme';
 
 /**
  * Entry route. Decides where to send the user based on auth + profile
@@ -37,7 +38,7 @@ export default function Index() {
   if (authLoading || !profileChecked) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#39ffc4" size="large" />
+        <ActivityIndicator color="#833AB4" size="large" />
       </View>
     );
   }
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#04100c',
+    backgroundColor: COLORS.background,
   },
 });
 

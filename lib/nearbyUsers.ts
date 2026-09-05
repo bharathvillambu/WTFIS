@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { DEFAULT_RADIUS_METERS } from '@/constants/config';
-import type { Coordinates, NearbyUser } from '@/types/user';
+import type { Coordinates, NearbyUser, NearbyUserFilters } from '@/types/user';
 
 /**
  * Pushes the current user's location up to Supabase via the
@@ -21,16 +21,22 @@ export async function updateMyLocation(
 
 /**
  * Calls the `get_nearby_users` RPC, which performs the PostGIS search
- * server-side and returns only privacy-safe fields (no raw coordinates).
+ * server-side and returns only privacy-safe fields (no raw coordinates,
+ * no raw birth date — only a derived age). Optional gender/age-range
+ * filters are applied server-side when provided.
  */
 export async function getNearbyUsers(
   coords: Coordinates,
-  radiusMeters: number = DEFAULT_RADIUS_METERS
+  radiusMeters: number = DEFAULT_RADIUS_METERS,
+  filters: NearbyUserFilters = {}
 ): Promise<{ data: NearbyUser[]; error: string | null }> {
   const { data, error } = await supabase.rpc('get_nearby_users', {
     lat: coords.latitude,
     lng: coords.longitude,
     radius_meters: radiusMeters,
+    gender_filter: filters.gender ?? null,
+    min_age: filters.minAge ?? null,
+    max_age: filters.maxAge ?? null,
   });
 
   if (error) return { data: [], error: error.message };
