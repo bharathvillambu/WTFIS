@@ -21,6 +21,7 @@ import { requestLocationPermission, getCurrentLocation } from '@/lib/location';
 import { updateMyLocation } from '@/lib/nearbyUsers';
 import GradientButton from '@/components/GradientButton';
 import GenderSelect from '@/components/GenderSelect';
+import CitySelect from '@/components/CitySelect';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
 import { COLORS, IG_GRADIENT } from '@/constants/theme';
 import { MIN_AGE } from '@/constants/config';
@@ -33,6 +34,7 @@ export default function SetupScreen() {
   const [profileUrl, setProfileUrl] = useState('');
   const [urlEdited, setUrlEdited] = useState(false);
   const [gender, setGender] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
   const [birthDate, setBirthDate] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -74,6 +76,10 @@ export default function SetupScreen() {
       Alert.alert('Date of birth required', 'Please select your date of birth.');
       return;
     }
+    if (!city) {
+      Alert.alert('City required', 'Please select your city.');
+      return;
+    }
     if (calculateAge(birthDate) < MIN_AGE) {
       Alert.alert('Age restriction', `You must be at least ${MIN_AGE} years old to use this app.`);
       return;
@@ -98,6 +104,7 @@ export default function SetupScreen() {
       avatar_url: avatarUrl,
       gender,
       birth_date: birthDate,
+      city,
     });
 
     setSaving(false);
@@ -215,6 +222,9 @@ export default function SetupScreen() {
 
         <Text style={styles.label}>Gender</Text>
         <GenderSelect value={gender} onChange={setGender} />
+
+        <Text style={styles.label}>City</Text>
+        <CitySelect value={city} onChange={setCity} placeholder="Select your city" />
 
         <Text style={styles.label}>Date of birth</Text>
         <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>

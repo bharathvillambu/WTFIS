@@ -32,6 +32,13 @@ export const STORAGE_AVATAR_BUCKET = 'avatars';
 /** Selectable gender options shown throughout the app. */
 export const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
 
+/**
+ * Cities the user can pick from. Kept to a small allow-list so all matching
+ * (Radar city-filter, profile field, etc.) is deterministic and typo-free.
+ */
+export const AVAILABLE_CITIES = ['Tirupati', 'Bangalore'] as const;
+export type City = typeof AVAILABLE_CITIES[number];
+
 /** Minimum age allowed to create a profile. */
 export const MIN_AGE = 18;
 

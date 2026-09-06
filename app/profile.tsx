@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import BottomNav from '@/components/BottomNav';
 import GradientButton from '@/components/GradientButton';
 import GenderSelect from '@/components/GenderSelect';
+import CitySelect from '@/components/CitySelect';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
 import { getMyProfile, upsertMyProfile, uploadAvatar } from '@/lib/profile';
 import { buildInstagramUrl, calculateAge } from '@/utils/validation';
@@ -29,6 +30,7 @@ export default function ProfileScreen() {
   const [username, setUsername] = useState('');
   const [profileUrl, setProfileUrl] = useState('');
   const [gender, setGender] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(null);
   const [birthDate, setBirthDate] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export default function ProfileScreen() {
         setProfileUrl(data.instagram_url ?? '');
         setGender(data.gender ?? null);
         setBirthDate(data.birth_date ?? null);
+        setCity(data.city ?? null);
         setAvatarUri(data.avatar_url);
       }
       setLoading(false);
@@ -90,6 +93,7 @@ export default function ProfileScreen() {
       avatar_url: avatarUri,
       gender,
       birth_date: birthDate,
+      city,
     });
     setSaving(false);
 
@@ -154,6 +158,9 @@ export default function ProfileScreen() {
 
           <Text style={styles.label}>Gender</Text>
           <GenderSelect value={gender} onChange={setGender} />
+
+          <Text style={styles.label}>City</Text>
+          <CitySelect value={city} onChange={setCity} placeholder="Select your city" />
 
           <Text style={styles.label}>Date of birth</Text>
           <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>

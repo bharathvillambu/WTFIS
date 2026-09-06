@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -13,25 +13,20 @@ import { router, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/theme';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
-import GenderSelect from '@/components/GenderSelect';
-import AgeRangeFilter from '@/components/AgeRangeFilter';
 import OnlineDot from '@/components/OnlineDot';
 import { listConversations } from '@/lib/messages';
 import { listFavorites } from '@/lib/social';
-import { listUsersByCity } from '@/lib/city';
+import { searchUsersByUsername } from '@/lib/search';
 import type { CityUser, ConversationSummary, FavoriteUser } from '@/types/message';
 
-type Tab = 'chats' | 'favorites' | 'city';
+type Tab = 'chats' | 'favorites' | 'search';
 
 export default function MessagesScreen() {
   const [tab, setTab] = useState<Tab>('chats');
   const [convos, setConvos] = useState<ConversationSummary[]>([]);
   const [favs, setFavs] = useState<FavoriteUser[]>([]);
-  const [city, setCity] = useState('');
-  const [cityQuery, setCityQuery] = useState('');
-  const [cityUsers, setCityUsers] = useState<CityUser[]>([]);
-  const [gender, setGender] = useState('All');
-  const [ageRange, setAgeRange] = useState<[number, number] | null>(null);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<CityUser[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -42,18 +37,27 @@ export default function MessagesScreen() {
     } else if (tab === 'favorites') {
       const { data } = await listFavorites();
       setFavs(data);
-    } else if (tab === 'city' && cityQuery.trim()) {
-      const { data } = await listUsersByCity(cityQuery.trim(), {
-        gender: gender === 'All' ? null : gender,
-        minAge: ageRange?.[0] ?? null,
-        maxAge: ageRange?.[1] ?? null,
-      });
-      setCityUsers(data);
+    } else if (tab === 'search') {
+      if (query.trim()) {
+        const { data } = await searchUsersByUsername(query.trim());
+        setSearchResults(data);
+      } else {
+        setSearchResults([]);
+      }
     }
     setLoading(false);
-  }, [tab, cityQuery, gender, ageRange]);
+  }, [tab, query]);
 
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+
+  // Debounce the username search so we don't hammer the RPC on every keystroke.
+  useEffect(() => {
+    if (tab !== 'search') return;
+    const handle = setTimeout(() => {
+      refresh();
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [query, tab, refresh]);
 
   return (
     <View style={styles.screen}>
@@ -63,32 +67,27 @@ export default function MessagesScreen() {
       </View>
 
       <View style={styles.tabs}>
-        {(['chats', 'favorites', 'city'] as Tab[]).map((t) => (
+        {(['chats', 'favorites', 'search'] as Tab[]).map((t) => (
           <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'chats' ? 'Chats' : t === 'favorites' ? 'Favorited' : 'By City'}
+              {t === 'chats' ? 'Chats' : t === 'favorites' ? 'Favorited' : 'Search'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {tab === 'city' && (
+      {tab === 'search' && (
         <View style={styles.filterBox}>
           <TextInput
             style={styles.input}
-            placeholder="Type a city, e.g. Bangalore"
+            placeholder="Search by username (e.g. bharath)"
             placeholderTextColor={COLORS.textMuted}
-            value={city}
-            onChangeText={setCity}
-            onSubmitEditing={() => setCityQuery(city)}
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={query}
+            onChangeText={setQuery}
             returnKeyType="search"
           />
-          <TouchableOpacity style={styles.searchBtn} onPress={() => setCityQuery(city)}>
-            <Text style={styles.searchBtnText}>Search</Text>
-          </TouchableOpacity>
-          <Text style={styles.filterLabel}>Gender</Text>
-          <GenderSelect value={gender} onChange={setGender} includeAllOption />
-          <AgeRangeFilter range={ageRange} onChange={setAgeRange} />
         </View>
       )}
 
@@ -151,9 +150,9 @@ export default function MessagesScreen() {
         />
       )}
 
-      {tab === 'city' && (
+      {tab === 'search' && (
         <FlatList
-          data={cityUsers}
+          data={searchResults}
           keyExtractor={(c) => c.id}
           contentContainerStyle={{ padding: 16 }}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor="#833AB4" />}
@@ -169,7 +168,7 @@ export default function MessagesScreen() {
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <EmptyMsg text={cityQuery ? 'No users found in this city.' : 'Enter a city to browse.'} />
+            <EmptyMsg text={query.trim() ? 'No users match that username.' : 'Type a username to search.'} />
           }
         />
       )}
