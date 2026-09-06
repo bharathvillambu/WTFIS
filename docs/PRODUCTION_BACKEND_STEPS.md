@@ -301,7 +301,7 @@ New triggers:
 New indexes:
 `profiles_username_lower_idx`, `profiles_visible_updated_idx`, `profiles_location_gix`,
 `profiles_last_seen_idx`, `dm_participant_sender_time_idx`, `dm_participant_recv_time_idx`,
-`dm_recipient_unread_only_idx`, `notif_recipient_live_idx`, `blocks_blocker_idx`,
+`dm_recipient_unread_only_idx`, `notif_recipient_expiry_idx`, `blocks_blocker_idx`,
 `blocks_blocked_idx`, `reports_status_idx`, `reports_reported_idx`.
 
 New pg_cron jobs:

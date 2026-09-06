@@ -7,6 +7,8 @@ import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { upsertPushToken } from '@/lib/notifications';
 
+let hasWarnedAndroidExpoGoPushUnsupported = false;
+
 // Show OS-level banners even when the app is in the foreground.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -33,6 +35,13 @@ export function usePushRegistration() {
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
 
+      const isAndroidExpoGo =
+        Platform.OS === 'android'
+        && (
+          Constants.appOwnership === 'expo'
+          || Constants.executionEnvironment === 'storeClient'
+        );
+
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
           name: 'Default',
@@ -54,6 +63,16 @@ export function usePushRegistration() {
         Constants.expoConfig?.extra?.eas?.projectId ??
         (Constants as any).easConfig?.projectId;
       if (!projectId) return;
+
+      if (isAndroidExpoGo) {
+        if (!hasWarnedAndroidExpoGoPushUnsupported) {
+          hasWarnedAndroidExpoGoPushUnsupported = true;
+          console.warn(
+            'Remote push registration is skipped on Android inside Expo Go. Use an EAS development build or production build to test expo-notifications push delivery.'
+          );
+        }
+        return;
+      }
 
       try {
         const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
