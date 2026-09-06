@@ -31,10 +31,10 @@ create index if not exists dm_recipient_unread_only_idx
   where read_at is null;
 
 -- Notification inbox scans.
--- (0003 already indexed recipient + created_at; also add expiry-live index.)
-create index if not exists notif_recipient_live_idx
-  on public.notifications (recipient_id, created_at desc)
-  where expires_at > now();
+-- Partial indexes cannot use `now()` because predicates must be IMMUTABLE.
+-- Use a composite recipient + expiry index instead for live-inbox queries.
+create index if not exists notif_recipient_expiry_idx
+  on public.notifications (recipient_id, expires_at, created_at desc);
 
 -- Block lookups from either direction.
 create index if not exists blocks_blocker_idx on public.user_blocks (blocker_id);
