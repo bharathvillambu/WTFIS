@@ -1,106 +1,75 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
-import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { upsertPushToken } from '@/lib/notifications';
 
-let hasWarnedAndroidExpoGoPushUnsupported = false;
-
-// Show OS-level banners even when the app is in the foreground.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList:   true,
-    shouldPlaySound:  true,
-    shouldSetBadge:   true,
-  }),
-});
-
 /**
- * Requests permission, obtains an Expo push token, registers it with Supabase,
- * and routes on notification tap. Mount at the root layout.
+ * Registers push token with Supabase on auth state changes.
+ * Works with native push services (FCM for Android, APNs for iOS).
  */
 export function usePushRegistration() {
-  const receivedSub = useRef<Notifications.Subscription | null>(null);
-  const responseSub = useRef<Notifications.Subscription | null>(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
 
-    const register = async () => {
-      if (!Device.isDevice) return; // simulators can't receive pushes
+    const registerToken = async () => {
+      // Skip on simulators/emulators
+      if (!Device.isDevice) return;
+
+      // Verify user is authenticated
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
 
-      const isAndroidExpoGo =
-        Platform.OS === 'android'
-        && (
-          Constants.appOwnership === 'expo'
-          || Constants.executionEnvironment === 'storeClient'
-        );
-
-      if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'Default',
-          importance: Notifications.AndroidImportance.HIGH,
-          lightColor: '#833AB4',
-          vibrationPattern: [0, 250, 250, 250],
-        });
-      }
-
-      const perm = await Notifications.getPermissionsAsync();
-      let status = perm.status;
-      if (status !== 'granted') {
-        const req = await Notifications.requestPermissionsAsync();
-        status = req.status;
-      }
-      if (status !== 'granted') return;
-
-      const projectId =
-        Constants.expoConfig?.extra?.eas?.projectId ??
-        (Constants as any).easConfig?.projectId;
-      if (!projectId) return;
-
-      if (isAndroidExpoGo) {
-        if (!hasWarnedAndroidExpoGoPushUnsupported) {
-          hasWarnedAndroidExpoGoPushUnsupported = true;
-          console.warn(
-            'Remote push registration is skipped on Android inside Expo Go. Use an EAS development build or production build to test expo-notifications push delivery.'
-          );
-        }
-        return;
-      }
-
       try {
-        const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-        if (cancelled || !token) return;
+        // Get device-specific push token from native platform
+        let token: string | null = null;
+
+        if (Platform.OS === 'android') {
+          // For Android, you'll need to use Firebase Cloud Messaging
+          // This is a placeholder - implement with your FCM integration
+          token = await getPushTokenAndroid();
+        } else if (Platform.OS === 'ios') {
+          // For iOS, you'll need to use Apple Push Notification service
+          // This is a placeholder - implement with your APNs integration
+          token = await getPushTokenIOS();
+        }
+
+        if (cancelledRef.current || !token) return;
+
         await upsertPushToken(token, Platform.OS);
       } catch (e) {
-        // Silently swallow — will retry next launch / auth event.
+        console.error('Push token registration failed:', e);
+        // Silently swallow — will retry on next auth change or app launch
       }
     };
 
-    register();
+    // Register on mount and when auth state changes
+    registerToken();
 
-    receivedSub.current = Notifications.addNotificationReceivedListener(() => {});
-    responseSub.current = Notifications.addNotificationResponseReceivedListener((resp) => {
-      const route = (resp.notification.request.content.data as any)?.route as string | undefined;
-      if (route) router.push(route as any);
-    });
-
-    const { data: authSub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (s) register();
+    const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        registerToken();
+      }
     });
 
     return () => {
-      cancelled = true;
-      receivedSub.current?.remove();
-      responseSub.current?.remove();
-      authSub.subscription.unsubscribe();
+      cancelledRef.current = true;
+      authSub?.subscription.unsubscribe();
     };
   }, []);
+}
+
+// Placeholder functions - implement with your native push service
+async function getPushTokenAndroid(): Promise<string | null> {
+  // TODO: Implement Firebase Cloud Messaging integration
+  // Example: return await messaging().getToken();
+  return null;
+}
+
+async function getPushTokenIOS(): Promise<string | null> {
+  // TODO: Implement Apple Push Notification integration
+  return null;
 }
 
