@@ -13,50 +13,86 @@ export function usePushRegistration() {
 
   useEffect(() => {
     cancelledRef.current = false;
+    let authSub: any = null;
 
     const registerToken = async () => {
-      // Skip on simulators/emulators
-      if (!Device.isDevice) return;
-
-      // Verify user is authenticated
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
-
       try {
+        // Skip on simulators/emulators
+        if (!Device.isDevice) {
+          console.log('Push registration: Skipping on simulator/emulator');
+          return;
+        }
+
+        // Verify user is authenticated
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (!data?.session) {
+            console.log('Push registration: No active session');
+            return;
+          }
+        } catch (authError) {
+          console.error('Push registration: Failed to get session:', authError);
+          return;
+        }
+
         // Get device-specific push token from native platform
         let token: string | null = null;
 
         if (Platform.OS === 'android') {
-          // For Android, you'll need to use Firebase Cloud Messaging
-          // This is a placeholder - implement with your FCM integration
           token = await getPushTokenAndroid();
         } else if (Platform.OS === 'ios') {
-          // For iOS, you'll need to use Apple Push Notification service
-          // This is a placeholder - implement with your APNs integration
           token = await getPushTokenIOS();
         }
 
-        if (cancelledRef.current || !token) return;
+        if (cancelledRef.current) return;
 
-        await upsertPushToken(token, Platform.OS);
+        // Skip registration if no token available
+        if (!token) {
+          console.log('Push registration: No token available for', Platform.OS);
+          return;
+        }
+
+        // Register token with backend
+        try {
+          const result = await upsertPushToken(token, Platform.OS);
+          if (result.error) {
+            console.error('Push registration: Backend error:', result.error);
+          } else {
+            console.log('Push registration: Token registered successfully');
+          }
+        } catch (rpcError) {
+          console.error('Push registration: Failed to register token:', rpcError);
+        }
       } catch (e) {
-        console.error('Push token registration failed:', e);
-        // Silently swallow — will retry on next auth change or app launch
+        console.error('Push registration: Unexpected error:', e);
+        // Don't re-throw - this hook should not crash the app
       }
     };
 
-    // Register on mount and when auth state changes
+    // Register on mount
     registerToken();
 
-    const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        registerToken();
-      }
-    });
+    // Register on auth state changes
+    try {
+      const { data: subscription } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (session && !cancelledRef.current) {
+            registerToken();
+          }
+        }
+      );
+      authSub = subscription;
+    } catch (e) {
+      console.error('Push registration: Failed to set up auth listener:', e);
+    }
 
     return () => {
       cancelledRef.current = true;
-      authSub?.subscription.unsubscribe();
+      try {
+        authSub?.unsubscribe?.();
+      } catch (e) {
+        console.error('Push registration: Error during cleanup:', e);
+      }
     };
   }, []);
 }

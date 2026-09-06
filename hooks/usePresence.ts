@@ -18,27 +18,87 @@ export function usePresenceHeartbeat() {
     let interval: ReturnType<typeof setInterval> | null = null;
 
     const ping = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled || !data.session) return;
-      pingPresence();
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled || !data?.session) {
+          console.log('Presence: No active session');
+          return;
+        }
+
+        try {
+          const result = await pingPresence();
+          if (result.error) {
+            console.error('Presence ping error:', result.error);
+          }
+        } catch (err) {
+          console.error('Presence ping failed:', err);
+        }
+      } catch (err) {
+        console.error('Presence heartbeat error:', err);
+        // Don't re-throw - let the app continue
+      }
     };
 
+    // Initial ping
     ping();
-    interval = setInterval(ping, HEARTBEAT_MS);
 
-    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
-      if (state === 'active') ping();
-    });
+    // Heartbeat interval
+    interval = setInterval(() => {
+      try {
+        ping();
+      } catch (err) {
+        console.error('Presence interval ping error:', err);
+      }
+    }, HEARTBEAT_MS);
 
-    const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) ping();
-    });
+    // Listener for app state changes
+    let appStateSubscription: any = null;
+    try {
+      appStateSubscription = AppState.addEventListener('change', (state: AppStateStatus) => {
+        if (state === 'active') {
+          try {
+            ping();
+          } catch (err) {
+            console.error('Presence app state ping error:', err);
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Failed to add app state listener:', err);
+    }
+
+    // Auth state listener
+    let authSubscription: any = null;
+    try {
+      const { data: subscription } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (session) {
+            try {
+              ping();
+            } catch (err) {
+              console.error('Presence auth change ping error:', err);
+            }
+          }
+        }
+      );
+      authSubscription = subscription;
+    } catch (err) {
+      console.error('Failed to set up auth listener:', err);
+    }
 
     return () => {
       cancelled = true;
       if (interval) clearInterval(interval);
-      sub.remove();
-      authSub.subscription.unsubscribe();
+      try {
+        appStateSubscription?.remove?.();
+      } catch (err) {
+        console.error('Error removing app state listener:', err);
+      }
+      try {
+        authSubscription?.unsubscribe?.();
+      } catch (err) {
+        console.error('Error unsubscribing from auth:', err);
+      }
     };
   }, []);
 }
