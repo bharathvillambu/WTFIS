@@ -20,6 +20,8 @@ import GenderSelect from '@/components/GenderSelect';
 import CitySelect from '@/components/CitySelect';
 import CalendarDatePicker from '@/components/CalendarDatePicker';
 import { getMyProfile, upsertMyProfile, uploadAvatar } from '@/lib/profile';
+import { setCachedHasProfile } from '@/lib/settingsStorage';
+import { supabase } from '@/lib/supabase';
 import { buildInstagramUrl, calculateAge } from '@/utils/validation';
 import { COLORS, IG_GRADIENT } from '@/constants/theme';
 import { MIN_AGE } from '@/constants/config';
@@ -100,6 +102,11 @@ export default function ProfileScreen() {
     if (error) {
       Alert.alert('Could not save profile', error);
       return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) {
+      await setCachedHasProfile(userData.user.id, true);
     }
 
     Alert.alert('Saved', 'Your profile has been updated.');

@@ -19,6 +19,8 @@ import { buildInstagramUrl, calculateAge } from '@/utils/validation';
 import { uploadAvatar, upsertMyProfile, setRadarVisibility } from '@/lib/profile';
 import { requestLocationPermission, getCurrentLocation } from '@/lib/location';
 import { updateMyLocation } from '@/lib/nearbyUsers';
+import { setCachedHasProfile } from '@/lib/settingsStorage';
+import { supabase } from '@/lib/supabase';
 import GradientButton from '@/components/GradientButton';
 import GenderSelect from '@/components/GenderSelect';
 import CitySelect from '@/components/CitySelect';
@@ -112,6 +114,13 @@ export default function SetupScreen() {
     if (error) {
       Alert.alert('Could not save profile', error);
       return;
+    }
+
+    // Cache immediately so an offline relaunch right after setup doesn't
+    // misroute back into this wizard (see app/index.tsx for the fallback logic).
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user?.id) {
+      await setCachedHasProfile(userData.user.id, true);
     }
 
     setStep('radar');
