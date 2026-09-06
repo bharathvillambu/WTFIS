@@ -15,7 +15,6 @@
     "expo-linear-gradient": "~57.0.1",
     "expo-linking": "~57.0.9",
     "expo-location": "~57.0.16",
-    "expo-notifications": "~0.32.0",
     "expo-router": "~57.0.19",
     "expo-status-bar": "~57.0.1",
     "expo-web-browser": "~57.0.2",
