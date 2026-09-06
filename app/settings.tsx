@@ -127,6 +127,9 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/blocked')}>
+            <Text style={styles.linkText}>Blocked Users</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/privacy')}>
             <Text style={styles.linkText}>Privacy Policy</Text>
           </TouchableOpacity>

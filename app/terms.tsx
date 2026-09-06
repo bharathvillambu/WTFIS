@@ -30,8 +30,8 @@ export default function TermsScreen() {
         </Section>
 
         <Section title="Radar visibility is opt-in">
-          {'Appearing on Radar is entirely voluntary and can be disabled at any time. Insta ' +
-            'Locator never discovers or displays a user who has not explicitly enabled Radar ' +
+          {`Appearing on Radar is entirely voluntary and can be disabled at any time. ${APP_NAME} ` +
+            'never discovers or displays a user who has not explicitly enabled Radar ' +
             'visibility and granted location permission.'}
         </Section>
 

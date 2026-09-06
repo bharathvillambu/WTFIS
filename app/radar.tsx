@@ -17,7 +17,7 @@ import GenderSelect from '@/components/GenderSelect';
 import AgeRangeFilter from '@/components/AgeRangeFilter';
 import NotificationBell from '@/components/NotificationBell';
 import { useNearbyUsers } from '@/hooks/useNearbyUsers';
-import { DEFAULT_AGE_RANGE, DEFAULT_RADIUS_METERS, USERS_PAGE_SIZE } from '@/constants/config';
+import { APP_NAME, DEFAULT_AGE_RANGE, DEFAULT_RADIUS_METERS, USERS_PAGE_SIZE } from '@/constants/config';
 import { COLORS } from '@/constants/theme';
 import { getStoredRadius } from '@/lib/settingsStorage';
 import type { NearbyUser } from '@/types/user';
@@ -110,7 +110,7 @@ export default function RadarScreen() {
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyTitle}>No one nearby yet.</Text>
                 <Text style={styles.emptySubtitle}>
-                  Try widening your filters or invite people to join Insta Locator.
+                  Try widening your filters or invite people to join {APP_NAME}.
                 </Text>
               </View>
             )}
