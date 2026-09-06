@@ -93,3 +93,58 @@ export function NotificationBellIcon({ size = 24, color = '#833AB4' }: IconProps
   );
 }
 
+interface ToggleIconProps extends IconProps {
+  /** Fill the shape with `color` when true; otherwise stroke only. */
+  filled?: boolean;
+}
+
+/** Heart icon. Passing `filled` fills it (use red for "liked"). */
+export function HeartIcon({ size = 22, color = '#8E8E8E', filled = false }: ToggleIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 20.25s-7.25-4.4-7.25-10a4.25 4.25 0 0 1 7.25-3 4.25 4.25 0 0 1 7.25 3c0 5.6-7.25 10-7.25 10Z"
+        stroke={color}
+        fill={filled ? color : 'none'}
+        strokeWidth={STROKE_WIDTH}
+        {...LINE}
+      />
+    </Svg>
+  );
+}
+
+/** Five-point star. Passing `filled` fills it (use yellow for "favorited"). */
+export function StarIcon({ size = 22, color = '#8E8E8E', filled = false }: ToggleIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3.5l2.7 5.47 6.05.88-4.38 4.27 1.03 6.03L12 17.28l-5.4 2.87 1.03-6.03L3.25 9.85l6.05-.88L12 3.5Z"
+        stroke={color}
+        fill={filled ? color : 'none'}
+        strokeWidth={STROKE_WIDTH}
+        {...LINE}
+      />
+    </Svg>
+  );
+}
+
+/** Envelope icon for the "Message" action. */
+export function MessageIcon({ size = 22, color = '#8E8E8E' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 6.5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17V8a1.5 1.5 0 0 1 1.5-1.5Z"
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        {...LINE}
+      />
+      <Path
+        d="m3.5 7.5 8.5 6 8.5-6"
+        stroke={color}
+        strokeWidth={STROKE_WIDTH}
+        {...LINE}
+      />
+    </Svg>
+  );
+}
+

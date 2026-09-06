@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '@/constants/theme';
 import { MESSAGE_TTL_BANNER } from '@/constants/config';
@@ -17,6 +18,7 @@ import { getConversation, sendMessage, markMessagesRead } from '@/lib/messages';
 import type { DirectMessage } from '@/types/message';
 
 export default function ChatScreen() {
+  const insets = useSafeAreaInsets();
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const other = String(userId ?? '');
   const [messages, setMessages] = useState<DirectMessage[]>([]);
@@ -77,9 +79,16 @@ export default function ChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      // On iOS `padding` lifts the composer above the keyboard. On Android
+      // the OS uses `adjustResize` by default, so `height` cooperates best.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // Offset any status/notch area so the composer doesn't sit under the keyboard.
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+    >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>‹ Back</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>{'\u2039'} Back</Text></TouchableOpacity>
         <Text style={styles.title}>Chat</Text>
         <View style={{ width: 60 }} />
       </View>
@@ -92,7 +101,10 @@ export default function ChatScreen() {
         ref={listRef}
         data={visible}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: 12 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 12, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         renderItem={({ item, index }) => (
           <MessageBubble
             m={item}
@@ -104,7 +116,7 @@ export default function ChatScreen() {
         ListEmptyComponent={<Text style={styles.empty}>Send the first message.</Text>}
       />
 
-      <View style={styles.composer}>
+      <View style={[styles.composer, { paddingBottom: Math.max(12, insets.bottom) }]}>
         <TextInput
           style={styles.input}
           value={text}
@@ -112,6 +124,7 @@ export default function ChatScreen() {
           placeholder="Type a message"
           placeholderTextColor={COLORS.textMuted}
           maxLength={500}
+          multiline
         />
         <TouchableOpacity
           style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]}
@@ -201,13 +214,17 @@ const styles = StyleSheet.create({
   },
   empty: { color: COLORS.textSecondary, textAlign: 'center', marginTop: 24 },
   composer: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    padding: 12, borderTopWidth: 1, borderTopColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'flex-end', gap: 8,
+    paddingHorizontal: 12, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: COLORS.background,
   },
   input: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 999,
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 20,
     borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 14, paddingVertical: 10,
     color: COLORS.text,
+    maxHeight: 120,
+    minHeight: 40,
   },
   sendBtn: { backgroundColor: '#833AB4', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999 },
   sendText: { color: COLORS.white, fontWeight: '700' },

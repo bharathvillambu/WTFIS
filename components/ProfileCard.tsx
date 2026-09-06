@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Image, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatApproxDistance } from '@/utils/distance';
 import { COLORS, IG_GRADIENT } from '@/constants/theme';
 import { normalizeProfileLink } from '@/utils/validation';
-import { toggleProfileLike, toggleFavorite } from '@/lib/social';
+import { toggleProfileLike, toggleFavorite, getRelationshipFlags } from '@/lib/social';
 import OnlineDot from '@/components/OnlineDot';
+import { HeartIcon, StarIcon, MessageIcon } from '@/components/AppIcons';
 import type { NearbyUser } from '@/types/user';
 
 interface ProfileCardProps {
@@ -14,8 +15,35 @@ interface ProfileCardProps {
   onClose: () => void;
 }
 
+// Active colors for the toggle actions.
+const LIKE_ACTIVE_COLOR = '#EF4444';    // red-500
+const FAVORITE_ACTIVE_COLOR = '#F5C518'; // gold/yellow
+const IDLE_ICON_COLOR = COLORS.textSecondary;
+
 /** Full-detail popup shown when a user taps a row in the nearby-users list. */
 export default function ProfileCard({ user, onClose }: ProfileCardProps) {
+  const [liked, setLiked] = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [busy, setBusy] = useState<{ like: boolean; fav: boolean }>({ like: false, fav: false });
+
+  // Load current relationship flags whenever the popup opens for a new user.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setLiked(false);
+      setFavorited(false);
+      return;
+    }
+    getRelationshipFlags(user.id).then((flags) => {
+      if (cancelled) return;
+      setLiked(flags.liked);
+      setFavorited(flags.favorited);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   if (!user) return null;
 
   const handleOpenInstagram = async () => {
@@ -37,13 +65,34 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
   };
 
   const handleLike = async () => {
-    const { error } = await toggleProfileLike(user.id);
-    if (error) Alert.alert('Like failed', error);
+    if (busy.like) return;
+    // Optimistic flip so the icon reacts instantly; server call reconciles.
+    const next = !liked;
+    setLiked(next);
+    setBusy((b) => ({ ...b, like: true }));
+    const { liked: serverLiked, error } = await toggleProfileLike(user.id);
+    setBusy((b) => ({ ...b, like: false }));
+    if (error) {
+      setLiked(!next); // rollback
+      Alert.alert('Like failed', error);
+    } else {
+      setLiked(serverLiked);
+    }
   };
 
   const handleFavorite = async () => {
-    const { error } = await toggleFavorite(user.id);
-    if (error) Alert.alert('Favorite failed', error);
+    if (busy.fav) return;
+    const next = !favorited;
+    setFavorited(next);
+    setBusy((b) => ({ ...b, fav: true }));
+    const { favorited: serverFav, error } = await toggleFavorite(user.id);
+    setBusy((b) => ({ ...b, fav: false }));
+    if (error) {
+      setFavorited(!next); // rollback
+      Alert.alert('Favorite failed', error);
+    } else {
+      setFavorited(serverFav);
+    }
   };
 
   const handleMessage = () => {
@@ -93,14 +142,51 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
           </View>
 
           <View style={styles.actionsRow}>
-            <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
-              <Text style={styles.actionText}>{'\u2665\uFE0E'} Like</Text>
+            <TouchableOpacity
+              onPress={handleLike}
+              disabled={busy.like}
+              activeOpacity={0.7}
+              style={[styles.actionButton, liked && styles.actionButtonLiked]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: liked }}
+              accessibilityLabel={liked ? 'Unlike profile' : 'Like profile'}
+            >
+              <HeartIcon
+                size={22}
+                filled={liked}
+                color={liked ? LIKE_ACTIVE_COLOR : IDLE_ICON_COLOR}
+              />
+              <Text style={[styles.actionText, liked && { color: LIKE_ACTIVE_COLOR }]}>Like</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleFavorite} style={styles.actionButton}>
-              <Text style={styles.actionText}>{'\u2605\uFE0E'} Favorite</Text>
+
+            <TouchableOpacity
+              onPress={handleFavorite}
+              disabled={busy.fav}
+              activeOpacity={0.7}
+              style={[styles.actionButton, favorited && styles.actionButtonFavorited]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: favorited }}
+              accessibilityLabel={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <StarIcon
+                size={22}
+                filled={favorited}
+                color={favorited ? FAVORITE_ACTIVE_COLOR : IDLE_ICON_COLOR}
+              />
+              <Text style={[styles.actionText, favorited && { color: FAVORITE_ACTIVE_COLOR }]}>
+                Favorite
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleMessage} style={styles.actionButton}>
-              <Text style={styles.actionText}>{'\u2709\uFE0E'} Message</Text>
+
+            <TouchableOpacity
+              onPress={handleMessage}
+              activeOpacity={0.7}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel="Send a message"
+            >
+              <MessageIcon size={22} color={IDLE_ICON_COLOR} />
+              <Text style={styles.actionText}>Message</Text>
             </TouchableOpacity>
           </View>
 
@@ -218,12 +304,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.surface,
+    gap: 4,
+  },
+  actionButtonLiked: {
+    borderColor: LIKE_ACTIVE_COLOR,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  actionButtonFavorited: {
+    borderColor: FAVORITE_ACTIVE_COLOR,
+    backgroundColor: 'rgba(245, 197, 24, 0.10)',
   },
   actionText: {
     color: COLORS.text,
     fontSize: 12,
     fontWeight: '700',
+    marginTop: 2,
   },
   instagramButton: {
     paddingVertical: 14,
