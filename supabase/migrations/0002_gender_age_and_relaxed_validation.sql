@@ -1,4 +1,4 @@
--- Insta Locator — Gender/Age fields + Radar filters + relaxed validation
+-- Flick — Gender/Age fields + Radar filters + relaxed validation
 -- Run this AFTER 0001_init.sql, in the Supabase SQL editor, or via
 -- `supabase db push` / `supabase migration up` if using the Supabase CLI.
 

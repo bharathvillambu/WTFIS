@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { formatApproxDistance } from '@/utils/distance';
+import OnlineDot from '@/components/OnlineDot';
 import type { NearbyUser } from '@/types/user';
 
 interface RadarUserPointProps {
@@ -28,6 +29,7 @@ export default function RadarUserPoint({ user, x, y, onPress }: RadarUserPointPr
             </Text>
           </View>
         )}
+        <OnlineDot online={user.is_online} size={10} />
       </View>
       <Text style={styles.username} numberOfLines={1}>
         @{user.instagram_username}
@@ -44,6 +46,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dotWrapper: {
+    position: 'relative',
     shadowColor: '#39ffc4',
     shadowOpacity: 0.8,
     shadowRadius: 6,

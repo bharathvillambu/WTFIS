@@ -1,8 +1,12 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View, Image, Linking, Alert } from 'react-native';
+import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatApproxDistance } from '@/utils/distance';
 import { COLORS, IG_GRADIENT } from '@/constants/theme';
+import { normalizeProfileLink } from '@/utils/validation';
+import { toggleProfileLike, toggleFavorite } from '@/lib/social';
+import OnlineDot from '@/components/OnlineDot';
 import type { NearbyUser } from '@/types/user';
 
 interface ProfileCardProps {
@@ -14,19 +18,37 @@ interface ProfileCardProps {
 export default function ProfileCard({ user, onClose }: ProfileCardProps) {
   if (!user) return null;
 
-  // The button simply opens whatever URL is stored for this user - no
-  // format validation is applied, per product decision to allow any link.
   const handleOpenInstagram = async () => {
+    const url = normalizeProfileLink(user.instagram_url);
+    if (!url) {
+      Alert.alert('Unable to open link', 'No profile link is set for this user.');
+      return;
+    }
     try {
-      const supported = await Linking.canOpenURL(user.instagram_url);
+      const supported = await Linking.canOpenURL(url);
       if (supported) {
-        await Linking.openURL(user.instagram_url);
+        await Linking.openURL(url);
       } else {
         Alert.alert('Unable to open link', 'This URL could not be opened.');
       }
     } catch {
       Alert.alert('Unable to open link', 'Something went wrong opening this link.');
     }
+  };
+
+  const handleLike = async () => {
+    const { error } = await toggleProfileLike(user.id);
+    if (error) Alert.alert('Like failed', error);
+  };
+
+  const handleFavorite = async () => {
+    const { error } = await toggleFavorite(user.id);
+    if (error) Alert.alert('Favorite failed', error);
+  };
+
+  const handleMessage = () => {
+    onClose();
+    router.push(`/chat/${user.id}`);
   };
 
   return (
@@ -47,6 +69,7 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
                 </Text>
               </View>
             )}
+            <OnlineDot online={user.is_online} size={18} />
           </LinearGradient>
 
           <Text style={styles.username}>@{user.instagram_username}</Text>
@@ -67,6 +90,18 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
                 {formatApproxDistance(user.distance_meters)} away
               </Text>
             </View>
+          </View>
+
+          <View style={styles.actionsRow}>
+            <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
+              <Text style={styles.actionText}>{'\u2665\uFE0E'} Like</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleFavorite} style={styles.actionButton}>
+              <Text style={styles.actionText}>{'\u2605\uFE0E'} Favorite</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleMessage} style={styles.actionButton}>
+              <Text style={styles.actionText}>{'\u2709\uFE0E'} Message</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={handleOpenInstagram} activeOpacity={0.85} style={styles.instagramWrapper}>
@@ -168,6 +203,27 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 999,
     overflow: 'hidden',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 12,
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+  },
+  actionText: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: '700',
   },
   instagramButton: {
     paddingVertical: 14,

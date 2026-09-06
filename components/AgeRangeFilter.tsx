@@ -1,61 +1,69 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/constants/theme';
-import { MAX_AGE, MIN_AGE } from '@/constants/config';
+import { AGE_BUCKETS } from '@/constants/config';
 
 interface AgeRangeFilterProps {
-  range: [number, number];
-  onChange: (range: [number, number]) => void;
+  /** `null` means "All ages" (no age filtering). */
+  range: [number, number] | null;
+  onChange: (range: [number, number] | null) => void;
 }
 
-/** Compact stepper-based age-range filter (no external slider dependency). */
+/**
+ * Clean age-range picker: shows the currently selected bucket as a pill
+ * that opens a dropdown sheet of preset buckets (18-25, 25-30, ..., 50+).
+ * No stepper, no numeric fiddling.
+ */
 export default function AgeRangeFilter({ range, onChange }: AgeRangeFilterProps) {
-  const [min, max] = range;
+  const [open, setOpen] = useState(false);
 
-  const setMin = (next: number) => {
-    const clamped = Math.max(MIN_AGE, Math.min(next, max));
-    onChange([clamped, max]);
-  };
-  const setMax = (next: number) => {
-    const clamped = Math.min(MAX_AGE, Math.max(next, min));
-    onChange([min, clamped]);
-  };
+  const currentLabel =
+    AGE_BUCKETS.find((b) => {
+      if (b.range === null) return range === null;
+      return range !== null && b.range[0] === range[0] && b.range[1] === range[1];
+    })?.label ?? 'Custom';
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Age range</Text>
-      <View style={styles.row}>
-        <Stepper label="Min" value={min} onDecrement={() => setMin(min - 1)} onIncrement={() => setMin(min + 1)} />
-        <Text style={styles.separator}>—</Text>
-        <Stepper label="Max" value={max} onDecrement={() => setMax(max - 1)} onIncrement={() => setMax(max + 1)} />
-      </View>
-    </View>
-  );
-}
 
-function Stepper({
-  label,
-  value,
-  onDecrement,
-  onIncrement,
-}: {
-  label: string;
-  value: number;
-  onDecrement: () => void;
-  onIncrement: () => void;
-}) {
-  return (
-    <View style={styles.stepper}>
-      <Text style={styles.stepperLabel}>{label}</Text>
-      <View style={styles.stepperRow}>
-        <TouchableOpacity style={styles.stepperBtn} onPress={onDecrement}>
-          <Text style={styles.stepperBtnText}>−</Text>
-        </TouchableOpacity>
-        <Text style={styles.stepperValue}>{value}</Text>
-        <TouchableOpacity style={styles.stepperBtn} onPress={onIncrement}>
-          <Text style={styles.stepperBtnText}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.trigger}
+        onPress={() => setOpen(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.triggerText}>{currentLabel}</Text>
+        <Text style={styles.triggerChevron}>v</Text>
+      </TouchableOpacity>
+
+      <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Choose age range</Text>
+            {AGE_BUCKETS.map((bucket) => {
+              const selected =
+                bucket.range === null
+                  ? range === null
+                  : range !== null && bucket.range[0] === range[0] && bucket.range[1] === range[1];
+              return (
+                <TouchableOpacity
+                  key={bucket.label}
+                  style={[styles.option, selected && styles.optionActive]}
+                  onPress={() => {
+                    onChange(bucket.range);
+                    setOpen(false);
+                  }}
+                >
+                  <Text style={[styles.optionText, selected && styles.optionTextActive]}>
+                    {bucket.label}
+                  </Text>
+                  {selected && <Text style={styles.optionCheck}>OK</Text>}
+                </TouchableOpacity>
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -70,26 +78,70 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  row: {
+  trigger: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  separator: { color: COLORS.textSecondary, fontSize: 16 },
-  stepper: { alignItems: 'center' },
-  stepperLabel: { color: COLORS.textSecondary, fontSize: 11, marginBottom: 4 },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepperBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.chipBackground,
   },
-  stepperBtnText: { color: '#833AB4', fontSize: 16, fontWeight: '700' },
-  stepperValue: { color: COLORS.text, fontSize: 15, fontWeight: '700', minWidth: 24, textAlign: 'center' },
+  triggerText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  triggerChevron: {
+    color: COLORS.textSecondary,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: COLORS.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+  },
+  sheetTitle: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  optionActive: {
+    backgroundColor: COLORS.surface,
+  },
+  optionText: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  optionTextActive: {
+    color: '#833AB4',
+    fontWeight: '700',
+  },
+  optionCheck: {
+    color: '#833AB4',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });
-

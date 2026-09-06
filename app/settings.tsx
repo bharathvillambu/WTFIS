@@ -96,7 +96,7 @@ export default function SettingsScreen() {
             />
           </View>
           <Text style={styles.helperText}>
-            When enabled, your approximate location is used to help nearby Insta Locator
+            When enabled, your approximate location is used to help nearby Flick
             users discover your profile. You can turn this off anytime.
           </Text>
         </View>

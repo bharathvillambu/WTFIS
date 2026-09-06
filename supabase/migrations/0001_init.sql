@@ -1,4 +1,4 @@
--- Insta Locator MVP schema
+-- Flick MVP schema
 -- Run this in the Supabase SQL editor, or via `supabase db push` /
 -- `supabase migration up` if using the Supabase CLI.
 

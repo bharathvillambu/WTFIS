@@ -1,8 +1,8 @@
-# Insta Locator (MVP)
+# Flick (MVP)
 
 A location-based discovery app: users who opt in to **Radar** can see other
-consenting nearby Insta Locator users and open their Instagram profile with a
-tap. Insta Locator does **not** integrate with Instagram's API — the
+consenting nearby Flick users and open their Instagram profile with a
+tap. Flick does **not** integrate with Instagram's API — the
 Instagram URL is just a plain external link each user adds to their own
 profile.
 

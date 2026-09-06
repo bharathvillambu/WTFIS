@@ -3,10 +3,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { COLORS } from '@/constants/theme';
 
-const TABS: { label: string; icon: string; href: '/radar' | '/profile' | '/settings' }[] = [
-  { label: 'Radar', icon: '◎', href: '/radar' },
-  { label: 'Profile', icon: '⌂', href: '/profile' },
-  { label: 'Settings', icon: '⚙', href: '/settings' },
+const TABS: { label: string; icon: string; href: '/radar' | '/messages' | '/profile' | '/settings' }[] = [
+  { label: 'Radar', icon: '—Ž', href: '/radar' },
+  { label: 'Messages', icon: '✉', href: '/messages' },
+  { label: 'Profile', icon: 'Œ‚', href: '/profile' },
+  { label: 'Settings', icon: 'š™', href: '/settings' },
 ];
 
 /** Minimal Instagram-style bottom navigation shared by Radar, Profile, and Settings. */

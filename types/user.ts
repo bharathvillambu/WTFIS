@@ -7,6 +7,7 @@ export interface Profile {
   avatar_url: string | null;
   gender: string | null;
   birth_date: string | null;
+  city: string | null;
   visible_on_radar: boolean;
   location_updated_at: string | null;
   created_at: string;
@@ -26,7 +27,10 @@ export interface NearbyUser {
   avatar_url: string | null;
   gender: string | null;
   age: number | null;
+  city: string | null;
   distance_meters: number;
+  /** True when the user pinged presence within the last ~3 minutes. */
+  is_online?: boolean;
 }
 
 /** Optional server-side filters accepted by `get_nearby_users`. */
@@ -34,6 +38,7 @@ export interface NearbyUserFilters {
   gender?: string | null;
   minAge?: number | null;
   maxAge?: number | null;
+  city?: string | null;
 }
 
 export interface Coordinates {

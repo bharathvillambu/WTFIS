@@ -24,6 +24,7 @@ export interface UpsertProfileInput {
   avatar_url?: string | null;
   gender?: string | null;
   birth_date?: string | null;
+  city?: string | null;
 }
 
 export async function upsertMyProfile(
@@ -41,6 +42,7 @@ export async function upsertMyProfile(
     avatar_url: input.avatar_url ?? null,
     gender: input.gender ?? null,
     birth_date: input.birth_date ?? null,
+    city: input.city ?? null,
   });
 
   if (error) return { error: error.message };

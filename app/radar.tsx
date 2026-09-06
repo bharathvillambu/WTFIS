@@ -15,6 +15,7 @@ import BottomNav from '@/components/BottomNav';
 import UserCard from '@/components/UserCard';
 import GenderSelect from '@/components/GenderSelect';
 import AgeRangeFilter from '@/components/AgeRangeFilter';
+import NotificationBell from '@/components/NotificationBell';
 import { useNearbyUsers } from '@/hooks/useNearbyUsers';
 import { DEFAULT_AGE_RANGE, DEFAULT_RADIUS_METERS, USERS_PAGE_SIZE } from '@/constants/config';
 import { COLORS } from '@/constants/theme';
@@ -64,8 +65,11 @@ export default function RadarScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Insta Locator</Text>
-        <Text style={styles.subtitle}>Radar</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.title}>Flick</Text>
+          <Text style={styles.subtitle}>Radar</Text>
+        </View>
+        <NotificationBell />
       </View>
 
       <FlatList<NearbyUser>
@@ -133,9 +137,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 56,
     paddingBottom: 12,
+    paddingHorizontal: 16,
   },
   title: {
     color: COLORS.textSecondary,

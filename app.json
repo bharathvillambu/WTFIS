@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Insta Locator",
+    "name": "Flick",
     "slug": "insta-locator",
     "scheme": "instalocator",
     "version": "1.0.0",
@@ -11,8 +11,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.instalocator.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Insta Locator uses your location while Radar is open to show your approximate distance to nearby consenting users.",
-        "NSPhotoLibraryUsageDescription": "Insta Locator needs access to your photos so you can set a profile avatar."
+        "NSLocationWhenInUseUsageDescription": "Flick uses your location while Radar is open to show your approximate distance to nearby consenting users.",
+        "NSPhotoLibraryUsageDescription": "Flick needs access to your photos so you can set a profile avatar."
       }
     },
     "android": {
@@ -40,13 +40,13 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Insta Locator uses your location while Radar is open to show your approximate distance to nearby consenting users."
+          "locationWhenInUsePermission": "Flick uses your location while Radar is open to show your approximate distance to nearby consenting users."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Insta Locator needs access to your photos so you can set a profile avatar."
+          "photosPermission": "Flick needs access to your photos so you can set a profile avatar."
         }
       ]
     ],

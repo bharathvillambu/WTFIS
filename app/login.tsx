@@ -37,7 +37,7 @@ export default function LoginScreen() {
       <GradientButton label="Continue with Google" onPress={handleGoogleSignIn} loading={loading} style={styles.button} />
 
       <Text style={styles.disclaimer}>
-        Insta Locator is an independent app and is not affiliated with Instagram or Meta.
+        Flick is an independent app and is not affiliated with Instagram or Meta.
       </Text>
     </View>
   );

@@ -37,6 +37,7 @@ export async function getNearbyUsers(
     gender_filter: filters.gender ?? null,
     min_age: filters.minAge ?? null,
     max_age: filters.maxAge ?? null,
+    city_filter: filters.city ?? null,
   });
 
   if (error) return { data: [], error: error.message };

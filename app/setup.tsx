@@ -119,7 +119,7 @@ export default function SetupScreen() {
         setFinishing(false);
         Alert.alert(
           'Location permission required',
-          'To appear on Radar, Insta Locator needs your location. You can enable Radar later from Settings.'
+          'To appear on Radar, Flick needs your location. You can enable Radar later from Settings.'
         );
         await setRadarVisibility(false);
         router.replace('/radar');
@@ -159,7 +159,7 @@ export default function SetupScreen() {
           />
         </View>
         <Text style={styles.helperText}>
-          When enabled, other Insta Locator users nearby can discover your profile. You can
+          When enabled, other Flick users nearby can discover your profile. You can
           turn this off anytime.
         </Text>
 

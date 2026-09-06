@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatApproxDistance } from '@/utils/distance';
 import { COLORS, IG_GRADIENT_SHORT } from '@/constants/theme';
+import OnlineDot from '@/components/OnlineDot';
 import type { NearbyUser } from '@/types/user';
 
 interface UserCardProps {
@@ -14,17 +15,20 @@ interface UserCardProps {
 export default function UserCard({ user, onPress }: UserCardProps) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
-      <LinearGradient colors={IG_GRADIENT_SHORT} style={styles.avatarRing}>
-        {user.avatar_url ? (
-          <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback]}>
-            <Text style={styles.avatarFallbackText}>
-              {user.instagram_username.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
-      </LinearGradient>
+      <View style={styles.avatarWrap}>
+        <LinearGradient colors={IG_GRADIENT_SHORT} style={styles.avatarRing}>
+          {user.avatar_url ? (
+            <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <Text style={styles.avatarFallbackText}>
+                {user.instagram_username.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </LinearGradient>
+        <OnlineDot online={user.is_online} size={12} />
+      </View>
       <View style={styles.info}>
         <Text style={styles.username}>@{user.instagram_username}</Text>
         <Text style={styles.meta}>
@@ -49,6 +53,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  avatarWrap: {
+    width: 50,
+    height: 50,
+    position: 'relative',
   },
   avatarRing: {
     width: 50,
