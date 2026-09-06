@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/theme';
 import { listNotifications } from '@/lib/notifications';
+import { NotificationBellIcon } from '@/components/AppIcons';
 
 /** Top-right bell that shows an unread notification count and opens the inbox. */
 export default function NotificationBell() {
@@ -26,8 +27,8 @@ export default function NotificationBell() {
   );
 
   return (
-    <TouchableOpacity style={styles.wrapper} onPress={() => router.push('/notifications')}>
-      <Text style={styles.icon}>{'\u2407\uFE0E'}</Text>
+    <TouchableOpacity style={styles.wrapper} onPress={() => router.push('/notifications')} activeOpacity={0.8}>
+      <NotificationBellIcon color={unread > 0 ? '#833AB4' : COLORS.textSecondary} />
       {unread > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
@@ -39,24 +40,26 @@ export default function NotificationBell() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 21,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  icon: { fontSize: 20 },
   badge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#E1306C',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   badgeText: { color: COLORS.white, fontSize: 9, fontWeight: '800' },
 });

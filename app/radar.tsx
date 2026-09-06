@@ -27,7 +27,7 @@ export default function RadarScreen() {
   const [selectedUser, setSelectedUser] = useState<NearbyUser | null>(null);
   const [radius, setRadius] = useState(DEFAULT_RADIUS_METERS);
   const [genderFilter, setGenderFilter] = useState('All');
-  const [ageRange, setAgeRange] = useState<[number, number]>(DEFAULT_AGE_RANGE);
+  const [ageRange, setAgeRange] = useState<[number, number] | null>(DEFAULT_AGE_RANGE);
   const [visibleCount, setVisibleCount] = useState(USERS_PAGE_SIZE);
 
   useFocusEffect(
@@ -44,7 +44,8 @@ export default function RadarScreen() {
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const genderOk = genderFilter === 'All' || !u.gender || u.gender === genderFilter;
-      const ageOk = u.age == null || (u.age >= ageRange[0] && u.age <= ageRange[1]);
+      const ageOk =
+        ageRange === null || u.age == null || (u.age >= ageRange[0] && u.age <= ageRange[1]);
       return genderOk && ageOk;
     });
   }, [users, genderFilter, ageRange]);

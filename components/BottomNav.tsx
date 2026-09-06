@@ -2,12 +2,22 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { COLORS } from '@/constants/theme';
+import {
+  MessagesNavIcon,
+  ProfileNavIcon,
+  RadarNavIcon,
+  SettingsNavIcon,
+} from '@/components/AppIcons';
 
-const TABS: { label: string; icon: string; href: '/radar' | '/messages' | '/profile' | '/settings' }[] = [
-  { label: 'Radar', icon: '—Ž', href: '/radar' },
-  { label: 'Messages', icon: '✉', href: '/messages' },
-  { label: 'Profile', icon: 'Œ‚', href: '/profile' },
-  { label: 'Settings', icon: 'š™', href: '/settings' },
+const TABS: {
+  label: string;
+  href: '/radar' | '/messages' | '/profile' | '/settings';
+  Icon: React.ComponentType<{ size?: number; color?: string }>;
+}[] = [
+  { label: 'Radar', Icon: RadarNavIcon, href: '/radar' },
+  { label: 'Messages', Icon: MessagesNavIcon, href: '/messages' },
+  { label: 'Profile', Icon: ProfileNavIcon, href: '/profile' },
+  { label: 'Settings', Icon: SettingsNavIcon, href: '/settings' },
 ];
 
 /** Minimal Instagram-style bottom navigation shared by Radar, Profile, and Settings. */
@@ -24,7 +34,7 @@ export default function BottomNav() {
             style={styles.tab}
             onPress={() => router.replace(tab.href)}
           >
-            <Text style={[styles.icon, active && styles.activeIcon]}>{tab.icon}</Text>
+            <tab.Icon size={22} color={active ? '#833AB4' : COLORS.textSecondary} />
             <Text style={[styles.label, active && styles.activeLabel]}>{tab.label}</Text>
           </TouchableOpacity>
         );
@@ -45,14 +55,7 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 6,
-  },
-  icon: {
-    fontSize: 20,
-    color: COLORS.textSecondary,
-  },
-  activeIcon: {
-    color: '#833AB4',
+    paddingVertical: 8,
   },
   label: {
     color: COLORS.textSecondary,

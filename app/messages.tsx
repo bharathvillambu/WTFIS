@@ -147,7 +147,7 @@ export default function MessagesScreen() {
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<EmptyMsg text="Favorite people from Radar to save them here." />
+          ListEmptyComponent={<EmptyMsg text="Favorite people from Radar to save them here." />}
         />
       )}
 

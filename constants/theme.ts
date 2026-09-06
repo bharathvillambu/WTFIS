@@ -5,10 +5,10 @@
  */
 
 /** Classic Instagram logo gradient (purple -> pink -> orange -> yellow). */
-export const IG_GRADIENT = ['#4f5bd5', '#962fbf', '#d62976', '#fa7e1e', '#feda75'];
+export const IG_GRADIENT = ['#4f5bd5', '#962fbf', '#d62976', '#fa7e1e', '#feda75'] as const;
 
 /** Shorter 3-stop version, handy for small elements like chips/rings. */
-export const IG_GRADIENT_SHORT = ['#833AB4', '#E1306C', '#F77737'];
+export const IG_GRADIENT_SHORT = ['#833AB4', '#E1306C', '#F77737'] as const;
 
 export const COLORS = {
   background: '#FFFFFF',
