@@ -21,7 +21,18 @@ export const MAX_NEARBY_RESULTS = 50;
 /** Buckets used to round exact distances into privacy-safe approximations. */
 export const DISTANCE_BUCKETS_METERS = [50, 100, 250, 400, 700, 1000, 2500, 5000];
 
-export const APP_NAME = 'Insta Locator';
+export const APP_NAME = 'Flick';
+
+/**
+ * Public URLs referenced from the store listing, settings screen, and the
+ * age-gate acceptance banner. Update these when the hosted pages go live.
+ */
+export const PRIVACY_URL = 'https://flick.app/privacy';
+export const TERMS_URL   = 'https://flick.app/terms';
+export const SUPPORT_EMAIL = 'support@flick.app';
+
+/** Storage key set when the user accepts the age gate + T&C at signup. */
+export const AGE_ACCEPTED_STORAGE_KEY = 'flick.age_accepted_v1';
 
 export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';

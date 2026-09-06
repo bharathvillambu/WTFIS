@@ -6,8 +6,10 @@ import { formatApproxDistance } from '@/utils/distance';
 import { COLORS, IG_GRADIENT } from '@/constants/theme';
 import { normalizeProfileLink } from '@/utils/validation';
 import { toggleProfileLike, toggleFavorite, getRelationshipFlags } from '@/lib/social';
+import { blockUser } from '@/lib/moderation';
 import OnlineDot from '@/components/OnlineDot';
 import { HeartIcon, StarIcon, MessageIcon } from '@/components/AppIcons';
+import ReportUserModal from '@/components/ReportUserModal';
 import type { NearbyUser } from '@/types/user';
 
 interface ProfileCardProps {
@@ -25,6 +27,7 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
   const [liked, setLiked] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [busy, setBusy] = useState<{ like: boolean; fav: boolean }>({ like: false, fav: false });
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Load current relationship flags whenever the popup opens for a new user.
   useEffect(() => {
@@ -99,6 +102,30 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
     onClose();
     router.push(`/chat/${user.id}`);
   };
+
+  const handleBlock = () => {
+    Alert.alert(
+      'Block user',
+      `Block @${user.instagram_username}? They won't be able to see you on Radar, search you, or message you.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await blockUser(user.id);
+            if (error) {
+              Alert.alert('Could not block', error);
+              return;
+            }
+            onClose();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleReport = () => setReportOpen(true);
 
   return (
     <Modal transparent animationType="fade" visible={!!user} onRequestClose={onClose}>
@@ -200,8 +227,26 @@ export default function ProfileCard({ user, onClose }: ProfileCardProps) {
               <Text style={styles.instagramButtonText}>OPEN INSTAGRAM</Text>
             </LinearGradient>
           </TouchableOpacity>
+
+          <View style={styles.moderationRow}>
+            <TouchableOpacity onPress={handleReport} activeOpacity={0.7}>
+              <Text style={styles.moderationLink}>Report</Text>
+            </TouchableOpacity>
+            <Text style={styles.moderationDivider}>{'\u2022'}</Text>
+            <TouchableOpacity onPress={handleBlock} activeOpacity={0.7}>
+              <Text style={styles.moderationLinkDanger}>Block user</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+
+      <ReportUserModal
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetUserId={user.id}
+        targetUsername={user.instagram_username}
+        context="profile"
+      />
     </Modal>
   );
 }
@@ -331,5 +376,26 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
     letterSpacing: 1,
+  },
+  moderationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  moderationLink: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  moderationDivider: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+  },
+  moderationLinkDanger: {
+    color: COLORS.danger,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

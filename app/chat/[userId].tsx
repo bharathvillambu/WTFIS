@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +16,8 @@ import { COLORS } from '@/constants/theme';
 import { MESSAGE_TTL_BANNER } from '@/constants/config';
 import { supabase } from '@/lib/supabase';
 import { getConversation, sendMessage, markMessagesRead } from '@/lib/messages';
+import { blockUser } from '@/lib/moderation';
+import ReportUserModal from '@/components/ReportUserModal';
 import type { DirectMessage } from '@/types/message';
 
 export default function ChatScreen() {
@@ -25,7 +28,30 @@ export default function ChatScreen() {
   const [me, setMe] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const listRef = useRef<FlatList<DirectMessage>>(null);
+
+  const handleBlock = () => {
+    Alert.alert(
+      'Block user',
+      "Block this user? You won't see each other on Radar or in chats.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await blockUser(other);
+            if (error) {
+              Alert.alert('Could not block', error);
+              return;
+            }
+            router.back();
+          },
+        },
+      ]
+    );
+  };
 
   const refresh = useCallback(async () => {
     const { data } = await getConversation(other);
@@ -79,6 +105,7 @@ export default function ChatScreen() {
   };
 
   return (
+    <>
     <KeyboardAvoidingView
       style={styles.screen}
       // On iOS `padding` lifts the composer above the keyboard. On Android
@@ -90,7 +117,14 @@ export default function ChatScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>{'\u2039'} Back</Text></TouchableOpacity>
         <Text style={styles.title}>Chat</Text>
-        <View style={{ width: 60 }} />
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => setReportOpen(true)}>
+            <Text style={styles.headerAction}>Report</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleBlock}>
+            <Text style={styles.headerActionDanger}>Block</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.banner}>
@@ -135,6 +169,13 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
+    <ReportUserModal
+      visible={reportOpen}
+      onClose={() => setReportOpen(false)}
+      targetUserId={other}
+      context="chat"
+    />
+    </>
   );
 }
 
@@ -191,6 +232,14 @@ const styles = StyleSheet.create({
   },
   back: { color: '#833AB4', fontWeight: '700', width: 60 },
   title: { color: COLORS.text, fontWeight: '800', fontSize: 18 },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: 100,
+    justifyContent: 'flex-end',
+  },
+  headerAction: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '700' },
+  headerActionDanger: { color: COLORS.danger, fontSize: 12, fontWeight: '700' },
   banner: {
     backgroundColor: '#FEF3F8', borderColor: '#F7C6DA', borderWidth: 1,
     marginHorizontal: 12, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12,

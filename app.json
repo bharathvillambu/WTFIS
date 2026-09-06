@@ -48,6 +48,12 @@
         {
           "photosPermission": "Flick needs access to your photos so you can set a profile avatar."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#833AB4"
+        }
       ]
     ],
     "extra": {
